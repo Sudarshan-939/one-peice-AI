@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter API Tester</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-robot"></i> Dev Tools</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link active"><i class="fas fa-message"></i> API Tester</a>
+                <a href="profiles.html" class="nav-link"><i class="fas fa-users"></i> Profile Scrapers</a>
+            </nav>
+
+            <div class="settings-panel">
+                <div class="form-group">
+                    <label for="model-id">Model ID</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-cube"></i>
+                        <select id="model-id">
+                            <option value="liquid/lfm-2.5-1.2b-instruct:free">ramudu</option>
+                            <option value="arcee-ai/trinity-large-preview:free">bemudu</option>
+                            <option value="stepfun/step-3.5-flash:free">surudu</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" rows="4"
+                        placeholder="You are a helpful assistant...">You are a helpful assistant.</textarea>
+                </div>
+
+                <div class="status-indicator">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-text">Ready to test</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="chat-container">
+            <header class="chat-header">
+                <div class="header-info">
+                    <h1 id="current-model-display">ramudu</h1>
+                    <span class="badge">OpenRouter</span>
+                </div>
+                <button id="clear-chat" class="btn secondary-btn"><i class="fas fa-trash"></i> Clear</button>
+            </header>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="message system greeting">
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="message-content">
+                        Hello! Select a model in the sidebar and start asking questions to test the model.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form id="chat-form">
+                    <textarea id="message-input" placeholder="Type your message here..." rows="1"></textarea>
+                    <button type="submit" id="send-button" class="btn primary-btn"><i
+                            class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Include marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

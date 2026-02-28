@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Scrapers</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="profiles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-robot"></i> Dev Tools</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-message"></i> API Tester</a>
+                <a href="profiles.html" class="nav-link active"><i class="fas fa-users"></i> Profile Scrapers</a>
+            </nav>
+
+            <div class="settings-panel">
+                <p class="sidebar-description">
+                    Extract profile data from various platforms using the available scrapers and APIs.
+                </p>
+            </div>
+        </aside>
+
+        <main class="profiles-container">
+            <header class="chat-header">
+                <div class="header-info">
+                    <h1>Profile Scrapers & APIs</h1>
+                    <span class="badge">6 Sources Available</span>
+                </div>
+            </header>
+
+            <div class="scrapers-grid">
+                <!-- 1. LinkedIn -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fab fa-linkedin linkedin-color"></i>
+                        <h3>LinkedIn Profile</h3>
+                    </div>
+                    <form id="form-linkedin" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-link"></i>
+                            <input type="text" id="input-linkedin" placeholder="LinkedIn Profile Username" required>
+                        </div>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email-linkedin" placeholder="Your LinkedIn Email"
+                                title="Required by the API library to emulate the mobile app" required>
+                        </div>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password-linkedin" placeholder="Your LinkedIn Password"
+                                title="Required by the API library" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Scrape Data</button>
+                    </form>
+                    <div class="output-area" id="output-linkedin">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+                <!-- 2. Github -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fab fa-github github-color"></i>
+                        <h3>GitHub Profile</h3>
+                    </div>
+                    <form id="form-github" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="input-github" placeholder="GitHub Username" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Get Profile</button>
+                    </form>
+                    <div class="output-area" id="output-github">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+                <!-- 3. LeetCode -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fas fa-code leetcode-color"></i>
+                        <h3>LeetCode Data</h3>
+                    </div>
+                    <form id="form-leetcode" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="input-leetcode" placeholder="LeetCode Username" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Scrape Data</button>
+                    </form>
+                    <div class="output-area" id="output-leetcode">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. GetCP (Codeforces/CP) -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line cp-color"></i>
+                        <h3>GetCP (Codeforces)</h3>
+                    </div>
+                    <form id="form-getcp" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="input-getcp" placeholder="Handle" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Get CP Data</button>
+                    </form>
+                    <div class="output-area" id="output-getcp">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. CP Score API -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fas fa-trophy trophy-color"></i>
+                        <h3>CP Score API</h3>
+                    </div>
+                    <form id="form-cpscore" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="input-cpscore" placeholder="Username / Handle" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Get Scores</button>
+                    </form>
+                    <div class="output-area" id="output-cpscore">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. HackerRank -->
+                <div class="scraper-card">
+                    <div class="card-header">
+                        <i class="fab fa-hackerrank hackerrank-color"></i>
+                        <h3>HackerRank (Selenium)</h3>
+                    </div>
+                    <form id="form-hackerrank" class="scraper-form">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="input-hackerrank" placeholder="HackerRank Username" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn btn-full">Scrape Profile</button>
+                    </form>
+                    <div class="output-area" id="output-hackerrank">
+                        <pre><code>Waiting for input...</code></pre>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+
+    <script src="profiles.js"></script>
+</body>
+
+</html>
