@@ -114,6 +114,68 @@
     word-break: break-all;
 }
 
+/* JSON Syntax-Highlighted Viewer */
+.json-view {
+    background-color: #0d1117;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+.json-view::-webkit-scrollbar {
+    width: 6px;
+}
+
+.json-view::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.json-view::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 3px;
+}
+
+.json-pre {
+    margin: 0;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #8b949e;
+    white-space: pre-wrap;
+    word-break: break-word;
+    counter-reset: json-line;
+}
+
+/* Syntax highlighting colors (GitHub Dark theme inspired) */
+.json-key {
+    color: #79c0ff;
+    font-weight: 500;
+}
+
+.json-string {
+    color: #a5d6ff;
+}
+
+.json-number {
+    color: #f0883e;
+    font-weight: 500;
+}
+
+.json-boolean {
+    color: #ff7b72;
+    font-weight: 600;
+}
+
+.json-null {
+    color: #8b949e;
+    font-style: italic;
+}
+
 /* Brand Colors */
 .linkedin-color {
     color: #0a66c2;

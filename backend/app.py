@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests
 import json
@@ -21,8 +21,54 @@ import json
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
-app = Flask(__name__)
+# Serve frontend files from the parent directory (project root)
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+
+def load_dotenv():
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    dotenv_path = os.path.join(cwd, '..', '.env')
+    if os.path.exists(dotenv_path):
+        with open(dotenv_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, val = line.split('=', 1)
+                    os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+load_dotenv()
+
+app = Flask(__name__, static_folder=None)
 CORS(app)  # Allow CORS for the frontend to hit these APIs
+
+def extract_username(query):
+    """Extract username from a full URL or return as-is if already a username."""
+    if not query:
+        return query
+    # Strip trailing slashes
+    query = query.strip().rstrip('/')
+    # Handle full URLs like https://github.com/username or https://leetcode.com/username
+    if '/' in query:
+        # Take the last non-empty path segment
+        parts = [p for p in query.split('/') if p]
+        return parts[-1] if parts else query
+    return query
+
+@app.route('/')
+def serve_index():
+    return send_from_directory(FRONTEND_DIR, 'index.html')
+
+@app.route('/<path:path>')
+def serve_frontend(path):
+    # Don't intercept API routes
+    if path.startswith('api/'):
+        return jsonify({"error": "Endpoint not found"}), 404
+    # Only serve files that actually exist
+    file_path = os.path.join(FRONTEND_DIR, path)
+    if os.path.isfile(file_path):
+        return send_from_directory(FRONTEND_DIR, path)
+    return jsonify({"error": "File not found"}), 404
 
 # Chatbot Tester OpenRouter LangChain Proxy
 MODEL_MAPPING = {
@@ -40,7 +86,7 @@ def generate_resume():
     template_style = data.get('template_style', 'Simple Resume Two-column HTML, CSS')
     
     actual_model = MODEL_MAPPING.get(model_alias, "stepfun/step-3.5-flash:free")
-    OPENROUTER_API_KEY = "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"
+    OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
     
     try:
         llm = ChatOpenAI(
@@ -164,7 +210,7 @@ def generate_docx():
         # Ask AI to define replacements
         llm = ChatOpenAI(
             model=model_id,
-            openai_api_key='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',
+            openai_api_key=os.environ.get("OPENROUTER_API_KEY"),
             openai_api_base='https://openrouter.ai/api/v1',
             max_tokens=3000,
         )
@@ -233,7 +279,7 @@ def proxy_chat():
     actual_model = MODEL_MAPPING.get(model_alias, "liquid/lfm-2.5-1.2b-instruct:free")
     
     # Store the API key securely on the backend instead of the frontend
-    OPENROUTER_API_KEY = "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"
+    OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
     
     try:
         # Initialize LangChain using ChatOpenAI wrapper for OpenRouter compatibility
@@ -276,66 +322,88 @@ def proxy_chat():
 # For simplicity, we provide a placeholder or basic Selenium structure that you'd need to extend.
 @app.route('/api/linkedin', methods=['GET'])
 def scrape_linkedin():
-    # When using linkedin-api, you need email and password to construct a session.
-    # To use li_at cookie, we can mock the Linkedin initialization slightly differently, 
-    # but the simplest robust way with linkedin-api is to login with credentials or provide cookies dict if possible.
-    # The library doesn't expose a straightforward way to just passing an li_at string in a clean way without JSESSIONID
-    # So we'll instruct the user to provide their LinkedIn username and password in the headers or as params for testing (in a real app this should be POST + body)
-    
-    profile_username = request.args.get('query')
+    profile_username = extract_username(request.args.get('query'))
     linkedin_email = request.args.get('email')
     linkedin_password = request.args.get('password')
-    cookie_li_at = request.args.get('cookie')
     
     if not profile_username:
         return jsonify({"error": "Missing profile query parameter"}), 400
         
-    if not cookie_li_at and not (linkedin_email and linkedin_password):
+    if not (linkedin_email and linkedin_password):
         return jsonify({
-            "status": "success",
-            "source": "linkedin-api (Placeholder)",
-            "message": f"Successfully received request for {profile_username}.",
-            "note": "NO CREDENTIALS PROVIDED. The LinkedIn API library requires your regular LinkedIn Email and Password, OR a valid 'li_at' AND 'JSESSIONID' cookie combo in the underlying library. Please provide email and password in the UI to perform a real API authentication.",
-            "profile": {
-                 "url": profile_username,
-                 "name": "LinkedIn User",
-                 "headline": "Software Engineer"
+            "status": "info",
+            "source": "linkedin-api",
+            "message": f"Request received for '{profile_username}'.",
+            "note": "LinkedIn requires your Email and Password to authenticate. Please fill in the credentials fields and try again.",
+            "data": {
+                 "profile_url": f"https://www.linkedin.com/in/{profile_username}",
+                 "username": profile_username,
+                 "name": "Credentials Required",
+                 "headline": "Please provide email & password to scrape"
             }
         })
         
     try:
-        # Initialize the API
-        # Using linkedin-api is heavily reliant on passing email and password so it can emulate the mobile app.
-        if linkedin_email and linkedin_password:
-             api = Linkedin(linkedin_email, linkedin_password)
-        else:
-             # The linkedin_api package fundamentally requires an email and password to initialize its session
-             # Even if we pass cookies manually to its inner `requests.Session`, it is not officially supported by the wrapper wrapper signature.
-             return jsonify({"error": "The new `linkedin-api` method requires an Account Email and Password for authentication to emulate the LinkedIn Mobile app."}), 400
+        api = Linkedin(linkedin_email, linkedin_password)
 
-        # Now fetch the target user's profile
+        # Fetch the target user's profile
         profile = api.get_profile(profile_username)
         
-        # Get posts
-        posts_data = api.get_profile_posts(profile_username)
+        # Try to get posts (may fail silently)
+        posts_data = []
+        try:
+            posts_data = api.get_profile_posts(profile_username)
+        except Exception:
+            pass
+        
+        # Clean profile data
+        clean_profile = {
+            "name": f"{profile.get('firstName', '')} {profile.get('lastName', '')}".strip(),
+            "headline": profile.get("headline"),
+            "summary": profile.get("summary"),
+            "location": profile.get("locationName"),
+            "industry": profile.get("industryName"),
+            "profile_url": f"https://www.linkedin.com/in/{profile_username}",
+        }
         
         return jsonify({
             "status": "success",
-            "source": "linkedin-api (Mobile Emulation)",
-            "message": f"Successfully fetched profile for {profile_username}",
+            "source": "linkedin-api",
             "data": {
-                "profile": profile,
-                "recent_posts": posts_data
+                "profile": clean_profile,
+                "recent_posts": posts_data[:5] if posts_data else []
             }
         })
     except Exception as e:
-        return jsonify({"error": str(e), "message": "Remember to use your LinkedIn 'username' (not the full URL) in the query box."}), 500
+        error_msg = str(e).lower()
+        
+        # Provide human-readable error messages for common failures
+        if "challenge" in error_msg or "captcha" in error_msg:
+            user_message = "LinkedIn is requesting a CAPTCHA/security challenge. Please log into LinkedIn in your browser first, complete any verification, then try again."
+        elif "bad credentials" in error_msg or "invalid" in error_msg or "401" in error_msg:
+            user_message = "Invalid email or password. Please double-check your LinkedIn credentials."
+        elif "too many" in error_msg or "rate" in error_msg or "429" in error_msg:
+            user_message = "Too many login attempts. LinkedIn has temporarily blocked your account. Wait a few minutes and try again."
+        else:
+            user_message = f"LinkedIn login failed: {str(e)}. This library emulates LinkedIn's mobile app and may be blocked. Try logging into LinkedIn in your browser first to clear any security prompts."
+        
+        return jsonify({
+            "status": "error",
+            "source": "linkedin-api",
+            "error": user_message,
+            "data": {
+                "profile_url": f"https://www.linkedin.com/in/{profile_username}",
+                "username": profile_username,
+                "name": "Login Failed",
+                "headline": user_message
+            }
+        }), 200  # Return 200 so the frontend can display the error message in the UI instead of crashing
 
 # 2. GitHub Profile (ghprofile equivalent)
 # You can use the public GitHub API or a custom scraper
 @app.route('/api/github', methods=['GET'])
 def scrape_github():
-    username = request.args.get('query')
+    username = extract_username(request.args.get('query'))
     if not username:
         return jsonify({"error": "Missing query parameter"}), 400
     
@@ -347,9 +415,32 @@ def scrape_github():
             
         user_data = gh_response.json()
         
+        # Build clean profile data (no API URLs or internal IDs)
+        clean_profile = {
+            "name": user_data.get("name") or user_data.get("login"),
+            "username": user_data.get("login"),
+            "bio": user_data.get("bio"),
+            "location": user_data.get("location"),
+            "company": user_data.get("company"),
+            "email": user_data.get("email"),
+            "blog": user_data.get("blog") or None,
+            "twitter": user_data.get("twitter_username"),
+            "avatar_url": user_data.get("avatar_url"),
+            "profile_url": user_data.get("html_url"),
+            "hireable": user_data.get("hireable"),
+            "joined": user_data.get("created_at", "")[:10],  # Just the date
+        }
+        
+        clean_stats = {
+            "public_repos": user_data.get("public_repos", 0),
+            "followers": user_data.get("followers", 0),
+            "following": user_data.get("following", 0),
+            "public_gists": user_data.get("public_gists", 0),
+        }
+        
         # 2. Fetch Top Repositories
         repos_response = requests.get(f'https://api.github.com/users/{username}/repos?sort=updated&per_page=5')
-        repo_data_list = []
+        clean_repos = []
         
         if repos_response.status_code == 200:
             repos = repos_response.json()
@@ -357,8 +448,9 @@ def scrape_github():
                 repo_info = {
                     "name": repo.get("name"),
                     "description": repo.get("description"),
-                    "stars": repo.get("stargazers_count"),
                     "language": repo.get("language"),
+                    "stars": repo.get("stargazers_count", 0),
+                    "forks": repo.get("forks_count", 0),
                     "url": repo.get("html_url"),
                     "readme_preview": ""
                 }
@@ -368,18 +460,20 @@ def scrape_github():
                 readme_res = requests.get(readme_url, headers={'Accept': 'application/vnd.github.v3.raw'})
                 
                 if readme_res.status_code == 200:
-                    repo_info["readme_preview"] = readme_res.text[:1000] + "\n...[truncated]"
+                    repo_info["readme_preview"] = readme_res.text[:500] + "\n...[truncated]"
                 else:
                     repo_info["readme_preview"] = "No README available."
                     
-                repo_data_list.append(repo_info)
-                
-        user_data["top_repositories_with_readme"] = repo_data_list
+                clean_repos.append(repo_info)
 
         return jsonify({
              "status": "success",
              "source": "ghprofile",
-             "data": user_data
+             "data": {
+                 **clean_profile,
+                 **clean_stats,
+                 "top_repositories_with_readme": clean_repos
+             }
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -388,7 +482,7 @@ def scrape_github():
 # Uses LeetCode's public GraphQL API
 @app.route('/api/leetcode', methods=['GET'])
 def scrape_leetcode():
-    username = request.args.get('query')
+    username = extract_username(request.args.get('query'))
     if not username:
          return jsonify({"error": "Missing query parameter"}), 400
     
@@ -433,7 +527,7 @@ def scrape_leetcode():
 # Uses Codeforces Public API
 @app.route('/api/getcp', methods=['GET'])
 def getcp():
-    handle = request.args.get('query')
+    handle = extract_username(request.args.get('query'))
     if not handle:
          return jsonify({"error": "Missing query parameter"}), 400
          
@@ -453,7 +547,7 @@ def getcp():
 # A hypothetical unified CP score aggregator API endpoint
 @app.route('/api/cpscore', methods=['GET'])
 def get_cp_score():
-    username = request.args.get('query')
+    username = extract_username(request.args.get('query'))
     if not username:
          return jsonify({"error": "Missing query parameter"}), 400
          
@@ -473,7 +567,7 @@ def get_cp_score():
 # 6. HackerRank WebScraping Selenium
 @app.route('/api/hackerrank', methods=['GET'])
 def scrape_hackerrank():
-    username = request.args.get('query')
+    username = extract_username(request.args.get('query'))
     if not username:
          return jsonify({"error": "Missing query parameter"}), 400
 

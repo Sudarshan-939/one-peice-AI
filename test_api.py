@@ -1,10 +1,21 @@
 import urllib.request
 import json
 import ssl
+import os
+
+# Load .env file if it exists
+if os.path.exists('.env'):
+    with open('.env', 'r', encoding='utf-8') as f:
+        for line in f:
+            if '=' in line:
+                k, v = line.strip().split('=', 1)
+                os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
 url = 'https://openrouter.ai/api/v1/chat/completions'
+api_key = os.environ.get('OPENROUTER_API_KEY', '')
+
 headers = {
-    'Authorization': 'Bearer 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',
+    'Authorization': f'Bearer {api_key}',
     'Content-Type': 'application/json',
     'HTTP-Referer': 'http://localhost'
 }

@@ -1,12 +1,22 @@
 import json
 import requests
+import os
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
+
+# Load .env file if it exists
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+if os.path.exists(dotenv_path):
+    with open(dotenv_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if '=' in line:
+                k, v = line.strip().split('=', 1)
+                os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
 try:
     llm = ChatOpenAI(
         model='stepfun/step-3.5-flash:free',
-        openai_api_key='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',
+        openai_api_key=os.environ.get('OPENROUTER_API_KEY'),
         openai_api_base='https://openrouter.ai/api/v1',
         max_tokens=2500,
     )

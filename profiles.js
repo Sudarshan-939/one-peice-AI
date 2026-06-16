@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="profile-header">
                             <img src="${user.avatar_url}" class="profile-avatar" alt="Avatar">
                             <div class="profile-title">
-                                <h4>${user.name || user.login}</h4>
-                                <p><a href="${user.html_url}" target="_blank" style="color:var(--accent-color)">@${user.login}</a></p>
+                                <h4>${user.name || user.username}</h4>
+                                <p><a href="${user.profile_url}" target="_blank" style="color:var(--accent-color)">@${user.username}</a></p>
                             </div>
                         </div>
                         <p style="font-size: 0.8rem; margin: 0;">${user.bio || 'No bio'}</p>
@@ -136,6 +136,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Syntax-highlight JSON string with colored spans
+     */
+    function syntaxHighlightJSON(json) {
+        if (typeof json !== 'string') {
+            json = JSON.stringify(json, null, 2);
+        }
+        // Escape HTML entities
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // Apply syntax highlighting via regex
+        return json.replace(
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            }
+        );
+    }
+
+    /**
      * Helper to wrap output in Toggle Tabs
      */
     function wrapResultsWithToggle(outputEl, jsonData, sourceId) {
@@ -145,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         outputEl.style.background = 'transparent';
         outputEl.style.overflow = 'visible';
 
-        const jsonStr = JSON.stringify(jsonData, null, 2);
+        const highlightedJson = syntaxHighlightJSON(jsonData);
         const uiHtml = renderUICard(jsonData, sourceId);
 
         // Save in cache for the AI builder to use
@@ -158,8 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button type="button" class="toggle-btn active" onclick="this.parentElement.nextElementSibling.classList.remove('hidden'); this.parentElement.nextElementSibling.nextElementSibling.classList.add('hidden'); this.classList.add('active'); this.nextElementSibling.classList.remove('active');">JSON</button>
                     <button type="button" class="toggle-btn" onclick="this.parentElement.nextElementSibling.classList.add('hidden'); this.parentElement.nextElementSibling.nextElementSibling.classList.remove('hidden'); this.classList.add('active'); this.previousElementSibling.classList.remove('active');">Card UI</button>
                 </div>
-                <div class="json-view" style="background-color: #0d1117; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; height: 200px; overflow-y: auto;">
-                    <pre style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap; word-break: break-all;"><code>${jsonStr}</code></pre>
+                <div class="json-view">
+                    <pre class="json-pre"><code>${highlightedJson}</code></pre>
                 </div>
                 <div class="ui-view hidden" style="height: 200px; display:flex; flex-direction:column;">
                     <div style="flex:1; overflow-y:auto;">
@@ -172,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
+
 
     /**
      * Helper function to handle form submission, loading state, and API fetch

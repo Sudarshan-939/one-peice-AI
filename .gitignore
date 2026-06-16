@@ -1,0 +1,12 @@
+.venv/
+venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.DS_Store
+*.docx
+*.pdf
+test_output.docx
